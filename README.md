@@ -1,17 +1,17 @@
-# nebula-data
+# nstk-data
 
-`nebula-data` is the offline data bundle for the `nebula` package.
+`nstk-data` is the offline data bundle for the `nstk` package.
 
 It ships:
 
-- Orekit data under `nebula_data/orekit-data`
-- Cartopy offline raster and Natural Earth assets under `nebula_data/cartopy`
+- Orekit data under `nstk_data/orekit-data`
+- Cartopy offline raster and Natural Earth assets under `nstk_data/cartopy`
 
 Typical local development flow:
 
 ```bash
-pip install -e /path/to/nebula-data
-pip install -e /path/to/Nebula
+pip install -e /path/to/nstk-data
+pip install -e /path/to/nstk
 ```
 
-Once published, installing `nebula` will pull in `nebula-data` as a dependency.
+Once published, installing `nstk` will pull in `nstk-data` as a dependency.

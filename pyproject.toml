@@ -3,18 +3,18 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "nebula-data"
+name = "nstk-data"
 version = "0.1.0"
-description = "Offline Orekit and Cartopy data bundle for the Nebula package."
+description = "Offline Orekit and Cartopy data bundle for Nebula Space Toolkit."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache 2.0" }
 authors = [{ name = "Nathan Spencer", email = "nathanss1997@gmail.com" }]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nebula_data"]
+packages = ["nstk_data"]
 include = [
-    "nebula_data/**",
+    "nstk_data/**",
 ]
 exclude = [
     "**/.DS_Store",
@@ -26,7 +26,7 @@ exclude = [
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "nebula_data/**",
+    "nstk_data/**",
     "README.md",
     "pyproject.toml",
 ]
