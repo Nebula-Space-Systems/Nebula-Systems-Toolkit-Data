@@ -1,0 +1,105 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verify release tag matches package version
+        run: |
+          python - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          version = pyproject["project"]["version"]
+          tag_name = "${{ github.event.release.tag_name }}"
+          normalized_tag = tag_name[1:] if tag_name.startswith("v") else tag_name
+
+          if normalized_tag != version:
+              raise SystemExit(
+                  f"Release tag '{tag_name}' does not match pyproject version '{version}'."
+              )
+
+          print(f"Release tag matches package version: {version}")
+          PY
+
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check --strict dist/*
+
+      - name: Smoke test installed wheel contents
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+          cd "$(mktemp -d)"
+          python - <<'PY'
+          import importlib.metadata
+          from pathlib import Path
+
+          import nstk_data
+
+          package_root = nstk_data.get_package_root()
+          cartopy_dir = nstk_data.get_cartopy_data_dir()
+          orekit_dir = nstk_data.get_orekit_data_dir()
+
+          required_paths = [
+              cartopy_dir / "raster" / "topo_and_bathy.png",
+              cartopy_dir / "shapefiles" / "natural_earth" / "physical" / "ne_10m_land.shp",
+              orekit_dir / "tai-utc.dat",
+              orekit_dir / "Earth-Orientation-Parameters" / "IAU-2000" / "finals2000A.all",
+          ]
+          missing = [str(path) for path in required_paths if not path.exists()]
+          if missing:
+              raise SystemExit("Missing expected bundled files:\n" + "\n".join(missing))
+
+          print(f"Installed nstk-data {importlib.metadata.version('nstk-data')}")
+          print(f"Package root: {package_root}")
+          PY
+
+      - name: Show distribution sizes
+        run: ls -lh dist
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish:
+    if: github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+
+    environment:
+      name: pypi
+      url: https://pypi.org/project/nstk-data/
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
